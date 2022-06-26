@@ -76,7 +76,7 @@ public class OrderController {
 	
 	@PostMapping(value="/createOrder/{userId}/save", params="action=save")
 	public String saveNewOrder(@PathVariable("userId") Long id, @ModelAttribute("orderedProductsDTO") OrderedProductsListDTO orderedProductsListDTO, Model model, HttpServletRequest req) {
-		Order order = new Order();
+		
 		Set<OrderedProducts> orderedProductsList = new HashSet<OrderedProducts>();
 		
 		orderedProductsList.add(
@@ -96,6 +96,7 @@ public class OrderController {
 			orderedProductsList.add(orderedProduct);
 		}		
 		
+		Order order = new Order();
 		order.setOrderedProducts(orderedProductsList);		
 		order.setUser(userService.getUserById(id));
 		
