@@ -22,7 +22,7 @@
 		<p class="h4 mb-4">New Order</p>
 		
 		<form action="#" th:action="@{/orders/createOrder/{userId}/save(userId=${userId})}"
-					th:object="${orderedProductsDTO}"  method="POST">
+					th:object="${orderedProductsListDTO}"  method="POST">
 					
 		
 		<table class="table table-bordered table-striped">
@@ -34,6 +34,12 @@
 			</thead>
 		
 			<tbody>
+				<tr th:each="order : ${orderedProductsListDTO.orderedProductsListDTO}">
+					<td th:text="${order.productName}"/>
+					<td th:text="${order.amountOrdered}"/>
+				</tr>
+			
+			<!-- Add new Product to be ordered -->
 				<tr>
 					<td>
 						<select class="form-control"  th:field="*{productId}">
@@ -48,9 +54,9 @@
 				</tr>
 			</tbody>	
 		</table>	
-		
+			<button type="submit" class="btn btn-info col-2" name="action" value="addOrderedProduct">Add another Product</button>		
 					
-			<button type="submit" class="btn btn-info col-2">Save</button>
+			<button type="submit" class="btn btn-info col-2" name="action" value="save">Save</button>
 		</form>
 	<hr>
 	<a th:href="@{/users/}"> Back to the Users List</a>

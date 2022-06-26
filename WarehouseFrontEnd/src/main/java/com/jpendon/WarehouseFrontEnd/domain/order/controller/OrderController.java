@@ -4,6 +4,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,8 +15,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.jpendon.WarehouseFrontEnd.domain.order.dto.OrderedProductsDTO;
+import com.jpendon.WarehouseFrontEnd.domain.order.dto.OrderedProductsListDTO;
 import com.jpendon.WarehouseFrontEnd.domain.order.model.Order;
 import com.jpendon.WarehouseFrontEnd.domain.order.model.OrderedProducts;
 import com.jpendon.WarehouseFrontEnd.domain.order.service.IOrderService;
@@ -61,27 +66,68 @@ public class OrderController {
 	@GetMapping("/createOrder/{userId}")
 	public String showNewOrderForm(@PathVariable("userId") Long id, Model model) {
 		Product[] productsList = productService.getProductList();
-		OrderedProductsDTO orderedProductsDTO = new OrderedProductsDTO();
+		OrderedProductsListDTO orderedProductsListDTO = new OrderedProductsListDTO();
+		
 		model.addAttribute("products", productsList);
-		model.addAttribute("orderedProductsDTO", orderedProductsDTO);
+		model.addAttribute("orderedProductsListDTO", orderedProductsListDTO);
 		
 		return "orders/orderForm";
 	}
 	
-	@PostMapping("/createOrder/{userId}/save")
-	public String saveNewOrder(@PathVariable("userId") Long id, @ModelAttribute("orderedProductsDTO") OrderedProductsDTO orderedProductsDTO, Model model) {
+	@PostMapping(value="/createOrder/{userId}/save", params="action=save")
+	public String saveNewOrder(@PathVariable("userId") Long id, @ModelAttribute("orderedProductsDTO") OrderedProductsListDTO orderedProductsListDTO, Model model, HttpServletRequest req) {
 		Order order = new Order();
-			
-		OrderedProducts orderedProduct = new OrderedProducts(productService.getProductById(orderedProductsDTO.getProductId()), orderedProductsDTO.getAmountOrdered());
-		
 		Set<OrderedProducts> orderedProductsList = new HashSet<OrderedProducts>();
-		orderedProductsList.add(orderedProduct);
+		
+		orderedProductsList.add(
+				new OrderedProducts(
+						productService.getProductById(orderedProductsListDTO.getProductId()),
+						orderedProductsListDTO.getAmountOrdered()		
+						));
+		
+		OrderedProductsListDTO temp = (OrderedProductsListDTO) req.getSession().getAttribute("orderedProductsListDTO");
+		Set<OrderedProductsDTO> previousOrders = temp.getOrderedProductsListDTO();
+		
+		for (OrderedProductsDTO orderedProductsDTO : previousOrders) {
+			OrderedProducts orderedProduct = new OrderedProducts(
+					productService.getProductById(orderedProductsDTO.getProductId()),
+					orderedProductsDTO.getAmountOrdered());		
+			
+			orderedProductsList.add(orderedProduct);
+		}		
 		
 		order.setOrderedProducts(orderedProductsList);		
 		order.setUser(userService.getUserById(id));
 		
 		orderService.saveOrder(order);
+		req.getSession().removeAttribute("orderedProductsListDTO");
 								
 		return "redirect:/orders/";
 	}
+	
+	@PostMapping(value="/createOrder/{userId}/save", params="action=addOrderedProduct")
+	public String saveOrderedProduct(@PathVariable("userId") Long id, @ModelAttribute("orderedProductsListDTO") OrderedProductsListDTO orderedProductsListDTO, Model model, HttpSession session) {		
+		OrderedProductsListDTO previousOrders = (OrderedProductsListDTO)session.getAttribute("orderedProductsListDTO");
+		
+		OrderedProductsDTO newOrder = new OrderedProductsDTO(
+				orderedProductsListDTO.getProductId(),
+				orderedProductsListDTO.getAmountOrdered(),
+				productService.getProductById(orderedProductsListDTO.getProductId()).getProductName()
+				);
+		
+		if (previousOrders != null) {
+			orderedProductsListDTO.getOrderedProductsListDTO().addAll(previousOrders.getOrderedProductsListDTO());			
+		}
+			
+		orderedProductsListDTO.getOrderedProductsListDTO().add(newOrder);
+		
+		orderedProductsListDTO.clear();
+		
+		model.addAttribute("products", productService.getProductList());
+	
+		session.setAttribute("orderedProductsListDTO", orderedProductsListDTO);
+		
+		return "orders/orderForm";
+	}
+
 }
