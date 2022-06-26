@@ -1,0 +1,63 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">  
+    
+    </head>
+    
+<body>
+
+	<div class="container">
+	
+		<h3>New Order</h3>
+	
+		<hr>
+		
+		<p class="h4 mb-4">New Order</p>
+		
+		<form action="#" th:action="@{/orders/createOrder/{userId}/save(userId=${userId})}"
+					th:object="${orderedProductsDTO}"  method="POST">
+					
+		
+		<table class="table table-bordered table-striped">
+			<thead class="thead dark">
+				<tr>
+					<th>Product Name </th>
+					<th>Order Amount</th>
+				</tr>		
+			</thead>
+		
+			<tbody>
+				<tr>
+					<td>
+						<select class="form-control"  th:field="*{productId}">
+							<option value="0">Select Product</option>
+							<option th:each="product : ${products}" th:value="${product.id}" th:text="${product.productName}"></option>
+						</select>
+					</td>
+					<td>
+						<input type="text" th:field="*{amountOrdered}"
+							class="form-control mb-4 col-4" placeholder="Amount to be ordered">
+					</td>					
+				</tr>
+			</tbody>	
+		</table>	
+		
+					
+			<button type="submit" class="btn btn-info col-2">Save</button>
+		</form>
+	<hr>
+	<a th:href="@{/users/}"> Back to the Users List</a>
+	</div>
+
+
+</body>
+    
+    
+</html>
