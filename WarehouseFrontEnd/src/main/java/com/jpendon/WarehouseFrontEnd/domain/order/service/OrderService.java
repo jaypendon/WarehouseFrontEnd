@@ -1,9 +1,12 @@
 package com.jpendon.WarehouseFrontEnd.domain.order.service;
 
+import java.util.Set;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.jpendon.WarehouseFrontEnd.domain.order.model.Order;
+import com.jpendon.WarehouseFrontEnd.domain.order.model.OrderedProducts;
 
 
 @Service
@@ -41,6 +44,26 @@ public class OrderService implements IOrderService{
 	@Override
 	public void saveOrder(Order order) {
 		webClient.post()
+			.uri("/orders/")
+			.bodyValue(order)
+			.retrieve()
+			.bodyToMono(Order.class).block();
+	}
+
+	@Override
+	public void deleteOrderedProductById(Long orderId, Long orderedProductId) {
+		Order order = getOrderById(orderId);
+		
+		Set<OrderedProducts> newOrderedProductsList = order.getOrderedProducts();
+		for (OrderedProducts orderedProduct : newOrderedProductsList) {
+			if (orderedProductId == orderedProduct.getId()) {
+				newOrderedProductsList.remove(orderedProduct);
+				order.setOrderedProducts(newOrderedProductsList);
+				break;
+			}
+		}
+		
+		webClient.put()
 			.uri("/orders/")
 			.bodyValue(order)
 			.retrieve()
