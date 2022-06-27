@@ -47,11 +47,11 @@ public class OrderController {
 		return "orders/listOrders";
 	}
 	
-	@GetMapping("/orderedproduct/{orderId}")
+	@GetMapping("{orderId}/orderedproduct/")
 	public String getOrderById(@PathVariable("orderId") Long id,Model model) {
 		Order order = orderService.getOrderById(id);
 		model.addAttribute("orders", order);
-		
+
 		return "orders/orderInfo";
 	}
 	
@@ -75,9 +75,9 @@ public class OrderController {
 	}
 	
 	@PostMapping(value="/createOrder/{userId}/save", params="action=save")
-	public String saveNewOrder(@PathVariable("userId") Long id, @ModelAttribute("orderedProductsDTO") OrderedProductsListDTO orderedProductsListDTO, Model model, HttpServletRequest req) {
-		
+	public String saveNewOrder(@PathVariable("userId") Long id, @ModelAttribute("orderedProductsDTO") OrderedProductsListDTO orderedProductsListDTO, Model model, HttpServletRequest req) {	
 		Set<OrderedProducts> orderedProductsList = new HashSet<OrderedProducts>();
+		Set<OrderedProductsDTO> previousOrders = new HashSet<OrderedProductsDTO>();
 		
 		orderedProductsList.add(
 				new OrderedProducts(
@@ -86,7 +86,10 @@ public class OrderController {
 						));
 		
 		OrderedProductsListDTO temp = (OrderedProductsListDTO) req.getSession().getAttribute("orderedProductsListDTO");
-		Set<OrderedProductsDTO> previousOrders = temp.getOrderedProductsListDTO();
+		
+		if (temp != null) {
+			previousOrders = temp.getOrderedProductsListDTO();			
+		}
 		
 		for (OrderedProductsDTO orderedProductsDTO : previousOrders) {
 			OrderedProducts orderedProduct = new OrderedProducts(
@@ -96,11 +99,9 @@ public class OrderController {
 			orderedProductsList.add(orderedProduct);
 		}		
 		
-		Order order = new Order();
-		order.setOrderedProducts(orderedProductsList);		
-		order.setUser(userService.getUserById(id));
-		
+		Order order = new Order(userService.getUserById(id), orderedProductsList);	
 		orderService.saveOrder(order);
+		
 		req.getSession().removeAttribute("orderedProductsListDTO");
 								
 		return "redirect:/orders/";
@@ -108,7 +109,10 @@ public class OrderController {
 	
 	@PostMapping(value="/createOrder/{userId}/save", params="action=addOrderedProduct")
 	public String saveOrderedProduct(@PathVariable("userId") Long id, @ModelAttribute("orderedProductsListDTO") OrderedProductsListDTO orderedProductsListDTO, Model model, HttpSession session) {		
-		OrderedProductsListDTO previousOrders = (OrderedProductsListDTO)session.getAttribute("orderedProductsListDTO");
+		OrderedProductsListDTO previousOrders = null;
+
+		if ((OrderedProductsListDTO)session.getAttribute("orderedProductsListDTO") == null)
+			previousOrders = (OrderedProductsListDTO)session.getAttribute("orderedProductsListDTO");
 		
 		OrderedProductsDTO newOrder = new OrderedProductsDTO(
 				orderedProductsListDTO.getProductId(),
@@ -120,15 +124,20 @@ public class OrderController {
 			orderedProductsListDTO.getOrderedProductsListDTO().addAll(previousOrders.getOrderedProductsListDTO());			
 		}
 			
-		orderedProductsListDTO.getOrderedProductsListDTO().add(newOrder);
-		
+		orderedProductsListDTO.getOrderedProductsListDTO().add(newOrder);		
 		orderedProductsListDTO.clear();
 		
-		model.addAttribute("products", productService.getProductList());
-	
+		model.addAttribute("products", productService.getProductList());	
 		session.setAttribute("orderedProductsListDTO", orderedProductsListDTO);
 		
 		return "orders/orderForm";
 	}
 
+	
+	@GetMapping("/{orderId}/orderedproduct/delete/{orderedProductId}")
+	public String deleteOrderedProductById(@PathVariable("orderId") Long orderId, @PathVariable("orderedProductId") Long orderedProductId) {
+		orderService.deleteOrderedProductById(orderId, orderedProductId);		
+		
+		return "redirect:/orders/";
+	}
 }

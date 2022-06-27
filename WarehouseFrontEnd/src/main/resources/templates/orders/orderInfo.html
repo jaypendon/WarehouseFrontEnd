@@ -35,20 +35,20 @@
 		</thead>
 			
 		<tbody>
-			<tr th:each="order : ${orders.orderedProducts}">
-				<td th:text="${order.product.productName}"/>
-				<td th:text="${order.amountOrdered}"/>
-				<td th:text="${order.product.price}"/>
+			<tr th:each="orderedProduct : ${orders.orderedProducts}">
+				<td th:text="${orderedProduct.product.productName}"/>
+				<td th:text="${orderedProduct.amountOrdered}"/>
+				<td th:text="${orderedProduct.product.price}"/>
 			
 			
 			<td> 			
 				<!-- Action buttons -->
-				<a th:href="@{'/orders/update/' + ${order.id}}"
+				<a th:href="@{'/orders/orderedproduct/update/' + ${orderedProduct.id}}"
 					class="btn btn-info btn-sm">
 					Update
 				</a>
 			
-				<a th:href="@{'/orders/delete/' + ${order.id}}"
+				<a th:href="@{'/orders/' + ${orders.id} + '/orderedproduct/delete/' + ${orderedProduct.id}}"
 					class="btn btn-danger btn-sm"
 					onclick="if (!(confirm('Are you sure you want to delete this order?'))) return false">
 					Delete
